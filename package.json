@@ -1,0 +1,25 @@
+{
+  "name": "rn-kintone-demo",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "dotenv -e .env -- expo start",
+    "android": "dotenv -e .env -- expo start --android",
+    "ios": "dotenv -e .env -- expo start --ios",
+    "web": "dotenv -e .env -- expo start --web"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "expo": "~54.0.13",
+    "expo-constants": "^18.0.9",
+    "expo-status-bar": "~3.0.8",
+    "react": "19.1.0",
+    "react-native": "0.81.4"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "dotenv-cli": "^10.0.0",
+    "typescript": "~5.9.2"
+  },
+  "private": true
+}
