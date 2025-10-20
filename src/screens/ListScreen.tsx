@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Button } from "react-native";
-import { listRecords, deleteRecord, DemoRecord } from "../kintone";
+// import { listRecords, deleteRecord, DemoRecord } from "../kintone";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation";
+import { DemoService } from "@/apps/demo/service";
+import { DemoRecord } from "@/apps/demo/types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "List">;
 
@@ -14,7 +16,7 @@ export default function ListScreen({ navigation }: Props) {
   const load = async () => {
     setLoading(true);
     try {
-      const recs = await listRecords();
+      const recs = await DemoService.list()
       setItems(recs);
     } catch (e: any) {
       Alert.alert("Load error", e?.response?.data?.message ?? e?.message ?? "unknown");
@@ -32,17 +34,17 @@ export default function ListScreen({ navigation }: Props) {
     setRefreshing(false);
   }, []);
 
-  const onDelete = (id: string) => {
-    Alert.alert("Confirm delete", `ลบรายการ #${id}?`, [
+  const onDelete = (id: number) => {
+    Alert.alert("Confirm delete", `Delete #${id}?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
         style: "destructive",
         onPress: async () => {
           try {
-            await deleteRecord(id);
+            await DemoService.remove(id);
             await load();
-            Alert.alert("สำเร็จ", `ลบ #${id} แล้ว`);
+            Alert.alert("Success", `#${id} Deleted`);
           } catch (e: any) {
             Alert.alert("Delete error", e?.response?.data?.message ?? e?.message ?? "unknown");
             console.log("Delete error:", e?.response?.data ?? e);
@@ -55,13 +57,13 @@ export default function ListScreen({ navigation }: Props) {
   return (
     <View style={{ flex: 1, padding: 12 }}>
       <View style={{ marginBottom: 8 }}>
-        <Button title="สร้างรายการใหม่" onPress={() => navigation.navigate("Create")} />
+        <Button title="Create new" onPress={() => navigation.navigate("Create")} />
       </View>
 
       {loading ? <ActivityIndicator /> : (
         <FlatList
           data={items}
-          keyExtractor={(it) => it.$id.value}
+          keyExtractor={(it) => it.$id.value.toString()}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           renderItem={({ item }) => (
             <View style={{ padding: 12, borderWidth: 1, borderRadius: 10, marginBottom: 10 }}>

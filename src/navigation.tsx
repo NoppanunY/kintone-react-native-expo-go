@@ -8,7 +8,7 @@ import EditScreen from "./screens/EditScreen";
 export type RootStackParamList = {
   List: undefined;
   Create: undefined;
-  Edit: { id: string };
+  Edit: { id: number };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

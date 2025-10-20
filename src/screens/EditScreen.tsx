@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TextInput, Button, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TextInput, Button, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { getRecord, updateRecord, deleteRecord } from "../kintone";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../navigation";
+import { DemoService } from "@/apps/demo/service";
+import * as Location from 'expo-location';
+import { WebView } from 'react-native-webview';
+
+import MapView, { UrlTile, Marker } from "react-native-maps";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Edit">;
 
@@ -12,11 +17,29 @@ export default function EditScreen({ route, navigation }: Props) {
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [location, setLocation] = useState({});
+  const [lat, setLat] = useState(0);
+  const [lng, setLng] = useState(0);
+
+  const region = { latitude: 13.7563, longitude: 100.5018, latitudeDelta: 0.05, longitudeDelta: 0.05 };
+
+  const styles = StyleSheet.create({
+    container: {
+      ...StyleSheet.absoluteFillObject,
+      height: 400,
+      width: 400,
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+    },
+    map: {
+      ...StyleSheet.absoluteFillObject,
+    },
+  });
 
   useEffect(() => {
     (async () => {
       try {
-        const rec = await getRecord(id);
+        const rec = await DemoService.get(id);
         setTitle(rec?.Text?.value ?? "");
         setNote(rec?.Text_area?.value ?? "");
       } catch (e: any) {
@@ -26,14 +49,31 @@ export default function EditScreen({ route, navigation }: Props) {
         setLoading(false);
       }
     })();
+
+    async function getCurrentLocation() {
+      
+      console.log('get location')
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      console.log(location);
+      setLocation(location);
+      setLat(location.coords.latitude)
+      setLng(location.coords.longitude)
+    }
+
+    getCurrentLocation();
   }, [id]);
 
   const onSave = async () => {
-    if (!title.trim()) return Alert.alert("กรุณากรอก Title");
+    if (!title.trim()) return Alert.alert("Please enter Title");
     try {
       setSaving(true);
-      await updateRecord(id, { Title: { value: title }, Note: { value: note } });
-      Alert.alert("สำเร็จ", "บันทึกการแก้ไขแล้ว");
+      await DemoService.update(id, { Text: title, Text_area: note });
+      Alert.alert("Success", "Save Successed");
       navigation.replace("List");
     } catch (e: any) {
       Alert.alert("Update error", e?.response?.data?.message ?? e?.message ?? "unknown");
@@ -44,13 +84,13 @@ export default function EditScreen({ route, navigation }: Props) {
   };
 
   const onDelete = async () => {
-    Alert.alert("Confirm delete", `ลบรายการ #${id}?`, [
+    Alert.alert("Confirm delete", `Delete #${id}?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete", style: "destructive", onPress: async () => {
           try {
-            await deleteRecord(id);
-            Alert.alert("สำเร็จ", `ลบ #${id} แล้ว`);
+            await DemoService.remove(id);
+            Alert.alert("Success", `#${id} Deleted`);
             navigation.replace("List");
           } catch (e: any) {
             Alert.alert("Delete error", e?.response?.data?.message ?? e?.message ?? "unknown");
